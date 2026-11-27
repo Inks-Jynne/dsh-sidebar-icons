@@ -1570,6 +1570,7 @@ window.__ModuleLoader__.load({
       var observer = null
       var watched = null
       var probe = 0
+      var lastStyleCheck = 0
 
       function schedule() {
         if (disposed || timer) return
@@ -1653,20 +1654,43 @@ window.__ModuleLoader__.load({
       scan()
       watch()
 
-      /* 启动早期侧栏容器可能还没渲染：低频探几次，拿到之后换成精确观察 */
-      var tries = 0
+      /* 常驻心跳（800ms，只做几个小查询）：
+         ① 侧栏容器被宿主整个换掉时重新挂观察器；
+         ② 行被重渲染、我自己的节点被抹掉时补扫一次。
+         冷启动时这两件事都会发生，只靠 MutationObserver 会漏。 */
       probe = setInterval(function () {
-        tries += 1
         if (disposed) {
           clearInterval(probe)
           return
         }
-        if ((watched !== area() && area()) || tries > 60) {
-          clearInterval(probe)
+        try {
+        /* 宿主的启动流程可能把整片 <head> 换成新的，我们的 <style> 就没了 ——
+           这是"重启后样式失效、热重载后正常"的主因。发现没了就补回来；
+           但不和宿主抢：最多每 3 秒补一次，且任何异常都吞掉，绝不让心跳把页面搞崩。 */
+        var now = Date.now()
+        if (now - lastStyleCheck > 3000) {
+          lastStyleCheck = now
+          try {
+            if (!document.querySelector('style[data-plugin-css="' + STYLE_MARKER + '"]')) installStyles()
+          } catch (error) {
+            /* 拿不到文档就算了 */
+          }
+        }
+
+        var el = area()
+        if (!el) return
+        if (el !== watched) {
           watch()
           schedule()
+          return
         }
-      }, 500)
+        var rows = el.querySelectorAll('[' + ROW_KEY_ATTR + '^="workspace:"]').length
+        var marks = el.querySelectorAll('[' + MARK_ATTR + ']').length
+        if (marks < rows) schedule()
+        } catch (error) {
+          /* 心跳里任何异常都吞掉：它只是兜底，不该影响页面 */
+        }
+      }, 800)
 
       return function () {
         disposed = true
@@ -1685,11 +1709,15 @@ window.__ModuleLoader__.load({
       '[data-dsi-icon] > svg { display: block; }',
       '',
       '/* ── 项目行：官方灰度文件夹隐掉，换成玻璃双色文件夹 ── */',
-      '[' + FOLDER_ATTR + '] > svg:not([' + MARK_ATTR + ']) { display: none; }',
+      /* 只有「我自己的 svg 确实在这一行里」时才隐藏官方文件夹。
+         冷启动时宿主会重渲染行，可能抹掉我的节点却留下属性 —— 用 :has() 兜住，
+         这种情况自动退回官方图标，而不是留一格空白。 */
+      '[' + FOLDER_ATTR + ']:has(> svg[' + MARK_ATTR + ']) > svg:not([' + MARK_ATTR + ']) { display: none; }',
       '[' + FOLDER_ATTR + '] > svg[' + MARK_ATTR + '] { display: block; }',
       '',
       '/* ── 标题层级：项目标题 = 分组标题 ── */',
-      '[' + TITLE_ATTR + '] { font-weight: 600; }',
+      /* 同样抬高优先级：宿主 .title 的字重是 (0,1,0)，会盖掉属性选择器 */
+      '[' + TITLE_ATTR + '][' + TITLE_ATTR + '] { font-weight: 600; }',
 
 '/* ── 层级：会话行相对所属项目右移一段（只动 session 行的左内距，项目行不动） ──',
       '   宿主本来就用 --dsh-workspace-indent 按嵌套层级加 12px，这里在它的公式后面',
@@ -1697,13 +1725,14 @@ window.__ModuleLoader__.load({
       '   引导线画在行自己的 background-image 上（不能占 ::before/::after —— 那是宿主',
       '   的拖拽插入标记），因此拖拽、hover、选中都不受影响。 */',
       ':root { --dsi-session-indent: 16px; }',
-      '[data-row-key^="session:"] {',
-      '  /* 每个 var() 都带后备值：宿主哪天改名或删掉某个变量，这里只会退化成',
-      '     「8px 缩进」而不是整条声明失效（退化成 0 内距比不装插件还糟）。 */',
+      /* 选择器写成「属性 + 属性」把优先级抬到 (0,2,0)：宿主的 .sessionRow 是 (0,1,0)，
+         而本工程的样式表运行时注入，冷启动时可能排在插件样式之后 —— 同优先级会盖掉缩进。
+         !important 只作用于这一段 padding，不存在和宿主争样式的合理场景。 */
+      '[data-row-key^="session:"][data-row-key] {',
       '  padding-inline-start: calc(',
       '    var(--dsh-sidebar-row-padding, 8px) - var(--dsh-sidebar-paint-inset, 1px)',
       '    + var(--dsh-workspace-indent, 0px) + var(--dsi-session-indent, 16px)',
-      '  );',
+      '  ) !important;',
       '  --dsi-guide-x: calc(',
       '    var(--dsh-sidebar-row-padding, 8px) - var(--dsh-sidebar-paint-inset, 1px)',
       '    + var(--dsh-workspace-indent, 0px) + 4px',
@@ -1712,7 +1741,7 @@ window.__ModuleLoader__.load({
       '}',
       '/* 引导线：用 ::before 画在行的定位层里，选中/hover 的行也照样显示',
       '   （拖拽时宿主的 dropBefore::before 优先级更高，会给那一行让位）。 */',
-      '[data-row-key^="session:"]::before {',
+      '[data-row-key^="session:"][data-row-key]::before {',
       '  content: "";',
       '  position: absolute;',
       '  inset-block: 0;',
@@ -2037,9 +2066,11 @@ window.__ModuleLoader__.load({
         adoptRuntime()
 
         own(ctx, function () {
-          var style = installStyles()
+          installStyles()
           return function () {
-            if (style && style.parentNode) style.parentNode.removeChild(style)
+            /* 按选择器移除：style 可能在运行中被重建过，原引用未必还在文档里 */
+            var el = document.querySelector('style[data-plugin-css="' + STYLE_MARKER + '"]')
+            if (el && el.parentNode) el.parentNode.removeChild(el)
           }
         })
 
