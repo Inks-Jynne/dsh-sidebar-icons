@@ -109,18 +109,33 @@ Copy-Item "<本目录>" "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh
 
 ```
 dsh-sidebar-icons/
-├─ client.js          # 全部客户端逻辑：图标几何、渲染、选图面板、菜单、装饰 CSS
-├─ index.js           # Host 半边（本插件不注册 host 能力，留空实现）
-├─ package.json       # dsh.bundle / dsh.client 声明 + 版本
-├─ cordis.patch.yml   # bundle 往 profile 里插入自己
-├─ icon.svg           # 插件自己在插件列表里的图标
-├─ locale/{zh,en}.json
-├─ scripts/check.mjs # 零依赖自检（npm run check）
-├─ .github/workflows/check.yml
+├─ client.js            # 全部客户端逻辑：图标几何、渲染、选图面板、菜单注册、装饰 CSS
+├─ index.js             # Host 半边（本插件不注册 host 能力，留空实现）
+├─ package.json         # dsh.bundle / dsh.client 声明、版本、npm run check
+├─ cordis.patch.yml     # bundle 往 profile 里插入自己
+├─ icon.svg             # 插件列表里显示的那个图标
+├─ README.md            # 本文档
+├─ INSTALL.md           # 三步安装说明（下载安装包的人先看这个）
+├─ LICENSE              # MIT
+├─ .gitignore
+├─ locale/
+│  ├─ zh.json           # 插件列表用的中文元数据（title / description / detail）
+│  └─ en.json
+├─ scripts/
+│  └─ check.mjs         # 零依赖自检：三表一致 / 规则重复 / 渲染冒烟 / 版本与文案
+├─ .github/workflows/
+│  └─ check.yml         # 每次 push 跑 scripts/check.mjs + node --check
 └─ docs/
-   ├─ DETAIL.md       # 英文设计文档：几何、光影、分类规则、限制
-   └─ images/         # README 用的截图
+   ├─ USAGE.md          # 使用文档：自动匹配表、自定义流程、故障排查、卸载
+   ├─ DETAIL.md         # 设计文档（英文）：几何、光影参数、色板、分类规则、限制
+   ├─ CHANGELOG.md      # 版本记录
+   └─ images/
+      └─ sidebar.png    # README 顶部的截图
 ```
+
+**运行时只需要这些**：`package.json`、`index.js`、`client.js`、`cordis.patch.yml`、`icon.svg`、`locale/*.json`。
+其余的文档、自检脚本、CI 配置都不参与运行 —— Release 里的 `-install.zip` 就是「运行所需 + 文档」的精简版，
+`-source.zip` / GitHub 自动生成的 Source code 则是完整仓库。
 
 ---
 
@@ -131,8 +146,9 @@ node scripts/check.mjs      # 或 npm run check
 ```
 
 零依赖，检查：三张表（`CLAY` / `SESSION_KINDS` / `KIND_LABELS`）是否一一对应、规则表有没有重复 kind、
-每种图标在两个尺寸下能否渲染（以及尺寸分档对不对）、`package.json` 与 `CHANGELOG` 版本是否一致、
-`WORDS` 中英是否同键、locale 元数据是否完整。CI（`.github/workflows/check.yml`）在每次 push 时跑同一套。
+每种会话图标是否有 16px 专用字形、两个尺寸下能否渲染（以及尺寸分档对不对）、
+`package.json` 与 `CHANGELOG` 版本是否一致、`WORDS` 中英是否同键、locale 元数据是否完整。
+CI（`.github/workflows/check.yml`）在每次 push 时跑同一套。
 ## 已知限制
 
 - **16px 的会话行**里，黏土物体只保留轮廓 + 色系色；面板按 30–34px 渲染才是细节展开的尺寸。
