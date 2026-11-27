@@ -1,6 +1,6 @@
 # 安装说明（3 步）
 
-这是 **DeepSeek Harness** 的侧栏图标插件，v1.0.0。
+这是 **DeepSeek Harness** 的侧栏图标插件，v1.0.1。
 解压得到 `dsh-sidebar-icons` 文件夹，把它放进 DSH 的 profile 即可。
 
 ## 1. 找到你的 profile 目录

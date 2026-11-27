@@ -436,8 +436,13 @@ window.__ModuleLoader__.load({
     var PAINT = { body: 'body', cream: 'cream', dark: 'dark' }
     var renderCache = {}
 
+    /* id 必须「每次创建实例唯一」：同一 kind 可能出现两次（两个项目同为 paper），
+       共用 id 会让 url(#…) 指向被移除或别处的 <defs>，整块图标变空白。 */
+    var clayUid = 0
+
     function clayIds(key) {
-      var base = 'dsi-cl-' + key
+      clayUid += 1
+      var base = 'dsi-cl-' + key + '-' + clayUid
       return {
         body: base + '-b',
         cream: base + '-w',
@@ -772,13 +777,10 @@ window.__ModuleLoader__.load({
 
     function sessionIcon(kind, size) {
       var px = size || 16
-      /* ≤20px 走 16 画布的粗线字形；再大就画完整黏土物体（面板里 30/34px） */
+      /* ≤20px 走 16 画布的粗线字形（纯路径、没有 id，可以安全缓存） */
       if (px <= SHORT_SIDE) return smallSessionIcon(kind, px)
-      var key = 'session:' + kind + '@' + px
-      if (renderCache[key]) return renderCache[key]
-      var node = claySvg(sessionParts(kind), sessionTone(kind), clayIds('s-' + kind), px, true)
-      renderCache[key] = node
-      return node
+      /* 黏土物体带 <defs> id，不缓存：每个实例各自一组 id */
+      return claySvg(sessionParts(kind), sessionTone(kind), clayIds('s-' + kind), px, true)
     }
 
 /* ══════════════════════════ 项目：黏土文件夹 ══════════════════════════
@@ -810,11 +812,7 @@ window.__ModuleLoader__.load({
     /* React 版（选图面板里 30/34px 预览） */
     function folderIconReact(kind, size) {
       var px = size || 30
-      var key = 'folder:' + kind + '@' + px
-      if (renderCache[key]) return renderCache[key]
-      var node = claySvg(folderParts(false), clayTone(kind), clayIds('f-' + kind), px, px > SHORT_SIDE)
-      renderCache[key] = node
-      return node
+      return claySvg(folderParts(false), clayTone(kind), clayIds('f-' + kind), px, px > SHORT_SIDE)
     }
 
     /* DOM 版（项目行是别的包渲染的，只能自己插节点；这里只用于 16px 行内，
@@ -1512,6 +1510,9 @@ window.__ModuleLoader__.load({
       try {
         node = buildFolderNode(kind, open)
       } catch (error) {
+        /* 画不出来就把官方图标放回去，别留一个空白格 */
+        folder.removeAttribute(FOLDER_ATTR)
+        if (mark !== null && mark.parentNode) mark.parentNode.removeChild(mark)
         return kind
       }
       if (mark !== null) mark.parentNode.removeChild(mark)

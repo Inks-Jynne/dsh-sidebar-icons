@@ -1,7 +1,7 @@
 # Sidebar icons for DeepSeek Harness
 
 一套给 **DeepSeek Harness** 左侧栏用的黏土质感（Claymorphism）3D 图标插件：21 个项目文件夹图标 +
-28 个会话图标，同一套光影；每一行都能从它自己的 `⋯` 菜单换成任意一个图标。**当前版本 v1.0.0**。
+28 个会话图标，同一套光影；每一行都能从它自己的 `⋯` 菜单换成任意一个图标。**当前版本 v1.0.1**。
 
 > 只想装上用？看 **[INSTALL.md](INSTALL.md)**（解压 → 放进 node_modules → 插件管理里启用）。
 
@@ -165,7 +165,7 @@ CI（`.github/workflows/check.yml`）在每次 push 时跑同一套。
 
 ## 版本
 
-当前 **v1.0.0**（首个公开发布版本）。版本记录见 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
+当前 **v1.0.1**（1.0.0 的首个补丁）。版本记录见 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
 
 ---
 
