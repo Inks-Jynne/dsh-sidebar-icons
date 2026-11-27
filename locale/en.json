@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Sidebar icon theme",
+    "description": "Claymorphism sidebar icons: 21 soft-clay folders for Workspace rows (matched from the directory name) and 28 soft-clay objects for Session rows (matched from the title), all sharing one light source. A new project never repeats the colour above it, any row can be re-iconed from its own ⋯ menu, and Session rows are indented under their project with a hairline guide.",
+    "detail": "docs/DETAIL.md"
+  }
+}

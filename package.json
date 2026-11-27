@@ -1,0 +1,49 @@
+{
+  "name": "dsh-sidebar-icons",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Claymorphism 3D folder and session icons for the DeepSeek Harness sidebar, with per-row custom icons.",
+  "type": "module",
+  "main": "./index.js",
+  "scripts": {
+    "check": "node scripts/check.mjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "scripts",
+    "icon.svg",
+    "README.md",
+    "INSTALL.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "icons",
+    "sidebar",
+    "icon-theme",
+    "claymorphism"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}
