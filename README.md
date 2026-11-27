@@ -151,33 +151,75 @@ node scripts/check.mjs      # 或 npm run check
 CI（`.github/workflows/check.yml`）在每次 push 时跑同一套。
 ## 已知限制
 
-- **16px 的会话行**里，黏土物体只保留轮廓 + 色系色；面板按 30–34px 渲染才是细节展开的尺寸。
 - 会话图标只在该行状态为 **idle** 时显示：运行中 / 等待回答 / 未读完成 时，那个格子仍是官方的
   状态点；已归档行保持空白（官方行为）。
+- 16px 行里用的是**为小尺寸单独画的粗线字形**，不是把面板里那套黏土物体缩下来 ——
+  所以行内的图标与面板里的预览"同语义但不同形"，这是有意的取舍。
 - 自定义图标存在本机 `localStorage`，不跟随会话同步到别的设备。
 - 项目行的文件夹图标依赖官方行结构（`[data-sidebar-list-area]` + `[data-row-key^="workspace:"]`）；
-  若未来的 DSH 改了行结构，装饰会找不到锚点、安静地退回官方图标（不会弄坏行）。
+  若未来的 DSH 改了行结构，装饰会找不到锚点、在控制台告警一次并退回官方图标（不会弄坏行）。
 - 缩进 / 引导线 / 隐藏收藏星标这三段 CSS 是针对当前官方行结构与
   `@michengai/dsh-archive-manager` 的 DOM 写的；对应宿主或该插件大改时需要复核对位。
+- `package.json` 里的 `"private": true` 是为了防止误 `npm publish` —— **不影响**按目录安装进 DSH。
+  如果你希望别人能 `npm install`，删掉这个字段再发布即可。
 
-## 从旧版升级
+## 版本
 
-见 [docs/CHANGELOG.md](docs/CHANGELOG.md)。2.x 是"全部改成黏土材质"的大版本：
-布局、面板、缩进、星标位置都动过，升级后建议刷新一次窗口。
+当前 **v1.0.0**（首个公开发布版本）。版本记录见 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
 
 ---
 
 ## English
 
-A Claymorphism icon set for the DeepSeek Harness sidebar: **21 clay folders** for Workspaces and
-**28 clay objects** for Sessions, all sharing one light source, one shadow height and one rounding
-rule. Every row can be re-iconed from its own `⋯` menu (21 swatches for a project, 28 labelled tiles
-for a session); the choice is stored per row in `localStorage`. Session rows are indented 16px under
-their project with a hairline guide, and the archive plugin's favorite star is hidden from the row
-(it stays available in the `⋯` menu).
+### What it is
 
-Install: symlink or copy this folder into `~/.dsh/profiles/<profile>/node_modules/`, then enable
-`dsh-sidebar-icons`. Design spec: [docs/DETAIL.md](docs/DETAIL.md).
+A Claymorphism icon set for the **DeepSeek Harness** sidebar: **21 clay folders** for Workspace rows
+and **28 clay objects** for Session rows, all sharing one light source, one shadow height and one
+rounding rule.
+
+In the picker a Session icon is a 128-canvas clay object; in the 16px sidebar row it is replaced by a
+**bold glyph of the same meaning**, drawn for that size (2–4 paths, 2.2 stroke, 86% of the canvas) —
+a clay object scaled to 16px just reads as a coloured dot.
+
+### Install
+
+1. Download `dsh-sidebar-icons-v1.0.0-install.zip` from the Releases page and unzip it.
+2. Move the `dsh-sidebar-icons` folder into your profile's `node_modules`:
+   - Windows `C:\Users\<you>\.dsh\profiles\desktop\node_modules\`
+   - macOS / Linux `~/.dsh/profiles/desktop/node_modules/`
+3. In DSH open **Settings → Plugins**, enable `dsh-sidebar-icons`. Refresh (Ctrl+R) if the sidebar
+   looks unchanged.
+
+More detail, including troubleshooting and uninstall, in [INSTALL.md](INSTALL.md).
+
+### Use
+
+- Icons are matched from names automatically (see the rules table in [docs/DETAIL.md](docs/DETAIL.md)).
+- Override any single row: its `⋯` menu → **Custom icon…** → pick one. The choice is stored per row in
+  `localStorage` and never touches your session log or the Workspace registry.
+- A new project never repeats the colour of the project above it.
+- Session rows are indented 16px under their project with a theme-aware hairline guide; nested
+  Workspaces add the host's own per-level indent on top of that.
+- The archive plugin's favourite star is hidden from the row (it stays available in the `⋯` menu), so
+  the leading icon is always visible.
+
+### Limitations
+
+- A Session row shows its icon only while that row is **idle**; running / awaiting / unread-complete
+  rows keep the official status dot, and archived rows keep the cell empty.
+- Custom choices live in this browser's `localStorage` — they do not travel with the Session.
+- The folder mark depends on the shipped row markup (`[data-sidebar-list-area]`,
+  `[data-row-key^="workspace:"]`). If a future DSH release changes it, the decoration warns once in
+  the console and leaves the official icon in place.
+- Indent, guide line and the hidden favourite star are CSS written against the current row markup and
+  `@michengai/dsh-archive-manager`'s DOM; a major change on either side needs a re-check.
+
+### Design notes
+
+Body occupies 70–78% of a 128 canvas, every corner is rounded (≈18–20% of the body width), and the
+same five layers are used everywhere: ground shadow → three-stop body gradient → inner shadow →
+top light → rim light, plus at most one cream accent. Full parameters and the colour table are in
+[docs/DETAIL.md](docs/DETAIL.md).
 
 ## License
 
