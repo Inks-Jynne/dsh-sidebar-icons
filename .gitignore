@@ -1,0 +1,24 @@
+# 依赖与构建产物（本插件无构建步骤，源码即产物）
+node_modules/
+dist/
+build/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与临时文件
+*.log
+*.tmp
+*.bak
+npm-debug.log*
+pnpm-debug.log*
+
+# 本地测试残留
+.scratch/
+.tmp/
+*.local.*
